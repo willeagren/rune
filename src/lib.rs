@@ -22,11 +22,14 @@
 // SOFTWARE.
 // 
 // File created: 2023-02-16
-// Last updated: 2023-02-16
+// Last updated: 2023-02-17
 //
 
-mod tensor;
+pub mod function;
+pub mod context;
+pub mod tensor;
 
 #[allow(unused_imports)]
 pub use tensor::Tensor;
+pub use context::Context;
 

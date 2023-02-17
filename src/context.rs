@@ -21,46 +21,37 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-02-16
+// File created: 2023-02-17
 // Last updated: 2023-02-17
 //
 
-use ndarray::ArrayD;
-use ndarray::IxDyn;
-use crate::Context;
+use std::vec::Vec;
+
+use crate::Tensor;
+use crate::function::Function;
 
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct Tensor<'a> {
-    dims: &'a [usize], 
-    data: ArrayD<f32>,
-    ctx: Context<'a>,
-    requires_grad: bool,
+pub struct Context<'a> {
+    parents: Vec<&'a Tensor<'a>>,
+    saved_tensors: Vec<&'a Tensor<'a>>,
+    grad_fn: Function,
 }
 
-#[allow(dead_code)]
-impl<'a> Tensor<'a> {
-
-    pub fn from_numpy(
-        data: &'a ArrayD<f32>,
-    ) -> Self {
-        Tensor {
-            dims: data.shape(),
-            data: data.clone(),
-            ctx: Context::new(),
-            requires_grad: false,
+impl<'a> Default for Context<'a> {
+    fn default() -> Self {
+        Context {
+            parents: vec![],
+            saved_tensors: vec![],
+            grad_fn: Function::new(),
         }
     }
+}
 
-    pub fn zeros(
-        dims: &'a [usize], 
-    ) -> Self {
-        Tensor {
-            dims: &dims,
-            data: ArrayD::<f32>::zeros(IxDyn(&dims)),
-            ctx: Context::new(),
-            requires_grad: false,
-        }
+impl<'a> Context<'a> {
+
+    pub fn new() -> Self {
+        Context { ..Default::default() }
     }
 
 }
@@ -70,15 +61,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn construct_tensor() {
-        let t: Tensor = Tensor::from_numpy(
-            &ArrayD::<f32>::zeros(IxDyn(&[3, 2])),
-        );
-
-        let z: Tensor = Tensor::zeros(
-            &[2, 3],
-        );
+    fn new() {
+        let ctx: Context = Context::new();
     }
 
 }
-
