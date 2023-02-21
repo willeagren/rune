@@ -22,47 +22,84 @@
 // SOFTWARE.
 // 
 // File created: 2023-02-16
-// Last updated: 2023-02-17
+// Last updated: 2023-02-21
 //
 
-use ndarray::ArrayD;
-use ndarray::IxDyn;
-use crate::Context;
+use std::fmt::Debug;
+use num_traits::{Float, ToPrimitive, NumCast};
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub struct Tensor<'a> {
-    dims: &'a [usize], 
-    data: ArrayD<f32>,
-    ctx: Context<'a>,
+use crate::Size;
+
+pub trait DataType: Copy + Debug + Float + ToPrimitive {}
+
+impl DataType for f32 {}
+impl DataType for f64 {}
+
+#[derive(Debug, Clone)]
+pub struct Tensor<T: DataType> {
+    dims: Size,
+    data: Vec<T>,
     requires_grad: bool,
 }
 
 #[allow(dead_code)]
-impl<'a> Tensor<'a> {
+impl<T: DataType> Tensor<T> {
+    pub fn zeros(d: &[usize]) -> Self {
+        let shape = Size::new(d);
+        let num_elements = shape.num_elements();
+        let mut data = Vec::<T>::with_capacity(num_elements);
 
-    pub fn from_numpy(
-        data: &'a ArrayD<f32>,
-    ) -> Self {
+        for _ in 0..num_elements {
+            let item = match NumCast::from(0.0) {
+                Some(i) => i,
+                None => panic!("Could not cast 0 to generic type <T: DataType>."),
+            };
+            data.push(item);
+        }
+        
+        Tensor { dims: shape, data: data, requires_grad: false }
+    }
+
+    pub fn ones(d: &[usize]) -> Self {
+        let shape = Size::new(d);
+        let num_elements = shape.num_elements();
+        let mut data = Vec::<T>::with_capacity(num_elements);
+
+        for _ in 0..num_elements {
+            let item = match NumCast::from(1.0) {
+                Some(i) => i,
+                None => panic!("Could not cast 1 to generic type <T: DataType>."),
+            };
+            data.push(item);
+        }
+
+        Tensor { dims: shape, data: data, requires_grad: false }
+    }
+
+
+    pub fn dims(&self) -> &Size {
+        &self.dims
+    }
+
+    pub fn data(&self) -> &Vec<T> {
+        &self.data
+    }
+
+    pub fn requires_grad(&self) -> bool {
+        self.requires_grad
+    }
+
+    pub fn add(&self, other: &Tensor<T>) -> Self {
+        let shape = self.dims.clone();
+        let data: Vec<T> = self.data.iter()
+            .zip(other.data.iter())
+            .map(|(&u, &v)| u + v)
+            .collect();
         Tensor {
-            dims: data.shape(),
-            data: data.clone(),
-            ctx: Context::new(),
+            dims: shape, data: data,
             requires_grad: false,
         }
     }
-
-    pub fn zeros(
-        dims: &'a [usize], 
-    ) -> Self {
-        Tensor {
-            dims: &dims,
-            data: ArrayD::<f32>::zeros(IxDyn(&dims)),
-            ctx: Context::new(),
-            requires_grad: false,
-        }
-    }
-
 }
 
 #[cfg(test)]
@@ -70,15 +107,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn construct_tensor() {
-        let t: Tensor = Tensor::from_numpy(
-            &ArrayD::<f32>::zeros(IxDyn(&[3, 2])),
-        );
+    fn add() {
+        let a = Tensor::<f32>::ones(&[128, 4, 256, 256]);
+        let b = Tensor::<f32>::zeros(&[128, 4, 256, 256]);
+        let c = a.add(&b);
 
-        let z: Tensor = Tensor::zeros(
-            &[2, 3],
+        assert_eq!(
+            c.dims().to_vec(),
+            Size::new(&[128, 4, 256, 256]).to_vec(),
         );
     }
-
 }
 

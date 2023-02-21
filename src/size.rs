@@ -21,16 +21,51 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-02-17
-// Last updated: 2023-02-17
+// File created: 2023-02-21
+// Last updated: 2023-02-21
 //
 
-pub mod binary;
-pub mod function;
-pub mod processing;
-pub mod reduce;
-pub mod unary;
+#[derive(Debug, Clone)]
+pub struct Size {
+    s: Vec<usize>,
+}
 
-#[allow(unused_imports)]
-pub use function::Function;
+impl Size {
+    pub fn new(s: &[usize]) -> Self {
+        Size { s: s.to_vec() }
+    }
+
+    pub fn num_elements(&self) -> usize {
+        self.s.iter().product()
+    }
+
+    pub fn to_vec(&self) -> &Vec<usize> {
+        &self.s
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn construct() {
+        let s = Size::new(&[12478, 8174, 1489, 2]);
+        let c = Size::new(&[192, 4, 511, 3, 4, 5, 6]);
+
+        assert_ne!(
+            *s.to_vec(),
+            *c.to_vec(),
+        );
+    }
+
+    #[test]
+    fn to_vec() {
+        let s = Size::new(&[128, 64, 32, 32]);
+        let v: &Vec<usize> = s.to_vec();
+
+        assert_eq!(*v, vec![128, 64, 32, 32]);
+    }
+
+}
 

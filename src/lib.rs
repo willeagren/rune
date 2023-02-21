@@ -25,11 +25,10 @@
 // Last updated: 2023-02-17
 //
 
-pub mod function;
-pub mod context;
+pub mod size;
 pub mod tensor;
 
 #[allow(unused_imports)]
+pub use size::Size;
 pub use tensor::Tensor;
-pub use context::Context;
 
