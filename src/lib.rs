@@ -22,9 +22,10 @@
 // SOFTWARE.
 // 
 // File created: 2023-02-16
-// Last updated: 2023-02-17
+// Last updated: 2023-02-22
 //
 
+pub mod functions;
 pub mod size;
 pub mod tensor;
 

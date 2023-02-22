@@ -22,7 +22,7 @@
 // SOFTWARE.
 // 
 // File created: 2023-02-21
-// Last updated: 2023-02-21
+// Last updated: 2023-02-22
 //
 
 #[derive(Debug, Clone)]
@@ -66,6 +66,5 @@ mod tests {
 
         assert_eq!(*v, vec![128, 64, 32, 32]);
     }
-
 }
 
