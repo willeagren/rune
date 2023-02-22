@@ -1,4 +1,4 @@
-# Rune [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Lines of code](https://img.shields.io/tokei/lines/github/willeagren/rune)
+# Rune [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![codecov](https://codecov.io/gh/willeagren/rune/branch/main/graph/badge.svg?token=5IFPCXMPBG)](https://codecov.io/gh/willeagren/rune) ![Lines of code](https://img.shields.io/tokei/lines/github/willeagren/rune)
 
 Rune is a minimal deep learning framework written entirely in Rust. How minimal you may ask? You can run it efficiently, heck, even compile all of the source code, on a Raspberry Pi 4! 🧡
 
