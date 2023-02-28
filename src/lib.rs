@@ -22,13 +22,22 @@
 // SOFTWARE.
 // 
 // File created: 2023-02-16
-// Last updated: 2023-02-17
+// Last updated: 2023-02-28
 //
 
-pub mod size;
-pub mod tensor;
+use pyo3::prelude::*;
+use pyo3::wrap_pyfunction;
+use pyo3::Python;
 
-#[allow(unused_imports)]
-pub use size::Size;
-pub use tensor::Tensor;
+#[pyfunction]
+#[pyo3(text_signature = "(usize, /)")]
+pub fn hello_backend() {
+    println!("Hello, from Rust!");
+}
+
+#[pymodule]
+fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    m.add_wrapped(wrap_pyfunction!(hello_backend))?;
+    Ok(())
+}
 
