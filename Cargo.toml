@@ -1,8 +1,19 @@
 [package]
 name = "rune"
+description = "RUNE: RUsty Neural Engine"
 version = "0.1.0"
+authors = ["Wilhelm Ågren <wilhelmagren98@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/willeagren/rune"
 edition = "2021"
 
-[dependencies]
-num-traits = "0.2.15"
+[lib]
+name = "rune"
+crate-type = ["cdylib"]
+
+[dependencies.pyo3]
+version = "0.18.1"
+git = "https://github.com/pyo3/pyo3"
+features = ["extension-module"]
 

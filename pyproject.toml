@@ -1,0 +1,29 @@
+[build-system]
+requires = [ 'maturin>=0.15,<=0.18.1' ]
+build-backend = 'maturin'
+
+[project]
+name = 'rune'
+version = '0.1.0'
+authors = [
+    { name='Wilhelm Ågren', email='wilhelmagren98@gmail.com' },
+]
+description = 'RUNE: RUsty Neural Engine'
+readme = 'README.md'
+requires-python = '>=3.6'
+classifiers = [
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Rust',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Intended Audience :: Developers',
+]
+
+[project.urls]
+'Homepage' = 'https://github.com/willeagren/rune'
+
