@@ -21,50 +21,44 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-02-16
+// File created: 2023-03-03
 // Last updated: 2023-03-04
 //
 
-mod buffer;
-
 use numpy::PyReadonlyArrayDyn;
-use numpy::PyArrayDyn;
-use numpy::IntoPyArray;
 
 use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
-use pyo3::Python;
+use pyo3::PyNumberProtocol;
 
-#[pyfunction]
-pub fn add<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x + y).into_pyarray(py)
+#[derive(Clone)]
+#[pyclass(module = "rune")]
+pub struct Buffer {
+    shape: Vec<usize>,
+    data: Vec<f32>,
 }
 
-#[pyfunction]
-pub fn sub<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x - y).into_pyarray(py)
+#[pymethods]
+impl Buffer {
+    #[new]
+    fn new(arr: PyReadonlyArrayDyn<f32>) -> Self {
+        let shape = arr.shape().to_vec();
+        let data = match arr.as_slice() {
+            Ok(raw) => raw.to_vec(),
+            Err(_) => panic!("Could not create immutable view of internal data."),
+        };
+        Buffer { shape: shape, data: data }
+    }
 }
 
-//
-// DEFINE THE ``rune`` python module
-//
-#[pymodule]
-fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(add))?;
-    m.add_wrapped(wrap_pyfunction!(sub))?;
-    m.add_class::<buffer::Buffer>()?;
-    Ok(())
+#[pyproto]
+impl PyNumberProtocol for Buffer {
+    fn __add__(lhs: Buffer, rhs: Buffer) -> PyResult<Buffer> {
+        let shape: Vec<usize> = lhs.shape.clone();
+        let data: Vec<f32> = lhs.data.iter()
+            .zip(rhs.data.iter())
+            .map(|(&a, &b)| a + b)
+            .collect();
+        Ok(Buffer { shape: shape, data: data })
+    }
 }
 

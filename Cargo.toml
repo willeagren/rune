@@ -12,8 +12,11 @@ edition = "2021"
 name = "rune"
 crate-type = ["cdylib"]
 
+[dependencies]
+ndarray = "0.15.6"
+numpy = "0.15.0"
+
 [dependencies.pyo3]
-version = "0.18.1"
-git = "https://github.com/pyo3/pyo3"
+version = "0.15.1"
 features = ["extension-module"]
 
