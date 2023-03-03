@@ -22,22 +22,49 @@
 // SOFTWARE.
 // 
 // File created: 2023-02-16
-// Last updated: 2023-02-28
+// Last updated: 2023-03-04
 //
+
+mod buffer;
+
+use numpy::PyReadonlyArrayDyn;
+use numpy::PyArrayDyn;
+use numpy::IntoPyArray;
 
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
 use pyo3::Python;
 
 #[pyfunction]
-#[pyo3(text_signature = "(usize, /)")]
-pub fn hello_backend() {
-    println!("Hello, from Rust!");
+pub fn add<'py>(
+    py: Python<'py>, 
+    x: PyReadonlyArrayDyn<f32>, 
+    y: PyReadonlyArrayDyn<f32>,
+) -> &'py PyArrayDyn<f32> {
+    let x = &x.as_array();
+    let y = &y.as_array();
+    (x + y).into_pyarray(py)
 }
 
+#[pyfunction]
+pub fn sub<'py>(
+    py: Python<'py>, 
+    x: PyReadonlyArrayDyn<f32>, 
+    y: PyReadonlyArrayDyn<f32>,
+) -> &'py PyArrayDyn<f32> {
+    let x = &x.as_array();
+    let y = &y.as_array();
+    (x - y).into_pyarray(py)
+}
+
+//
+// DEFINE THE ``rune`` python module
+//
 #[pymodule]
 fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(hello_backend))?;
+    m.add_wrapped(wrap_pyfunction!(add))?;
+    m.add_wrapped(wrap_pyfunction!(sub))?;
+    m.add_class::<buffer::Buffer>()?;
     Ok(())
 }
 
