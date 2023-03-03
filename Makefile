@@ -1,3 +1,6 @@
+py:
+	maturin develop
+
 build:
 	cargo build
 
