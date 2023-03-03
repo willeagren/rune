@@ -22,11 +22,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 File created: 2023-02-28
-Last updated: 2023-02-28
+Last updated: 2023-03-04
 """
+
+from __future__ import annotations
 
 import logging
 import numpy as np
+
+from typing import (
+    Dict,
+    Union, 
+    List,
+    Tuple,
+    Optional, 
+    Sequence,
+    NoReturn,
+)
+from rune.typing import ArrayD
+from rune import Buffer 
 
 logger = logging.getLogger(__name__)
 
@@ -35,5 +49,24 @@ __all__ = (
 )
 
 class Tensor(object):
-    pass
+    """
+    """
 
+    def __init__(self, data: Union[ArrayD, List, Sequence], *args: Tuple,
+        requires_grad: Boolean = False, **kwargs: Dict) -> NoReturn:
+
+        # TODO convert data to ndarray
+        self.data = Buffer(data)
+        self.shape = data.shape
+        self.grad = None
+        self._ctx = None
+        self.requires_grad = requires_grad
+
+    @property
+    def shape(self) -> Tuple:
+        return self.shape
+
+    @property
+    def requires_grad(self) -> Boolean:
+        return self.requires_grad
+    
