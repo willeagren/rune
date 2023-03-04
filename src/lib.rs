@@ -25,6 +25,8 @@
 // Last updated: 2023-03-04
 //
 
+use std::convert::TryInto;
+
 use ndarray::ArrayD;
 use ndarray::Array;
 
@@ -45,16 +47,29 @@ pub struct Buffer {
     data: ArrayD<f32>,
 }
 
+#[allow(dead_code)]
+fn vec_to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
+    v.try_into()
+        .unwrap_or_else(
+            |v: Vec<T>| panic!("Expected Vec of length {} but got {}", N, v.len())
+        )
+}
+
 #[pymethods]
 impl Buffer {
     #[new]
     fn new(arr: PyReadonlyArrayDyn<f32>) -> Self {
-        let shape = arr.shape().to_vec();
-        let vec = match arr.as_slice() {
+        let slice_shape = arr.shape();
+        let shape = slice_shape.to_vec();
+        let data_vec = match arr.as_slice() {
             Ok(raw) => raw.to_vec(),
             Err(_) => panic!("Could not create immutable view of internal data."),
         };
-        let data: ArrayD<f32> = Array::from_vec(vec).into_dyn();
+        let data: ArrayD<f32> = Array::from_vec(data_vec).into_dyn();
+        let data = match data.into_shape(slice_shape) {
+            Ok(shaped) => shaped,
+            Err(e) => panic!("Could not reshape ArrayBase to {:?}, {}", slice_shape, e),
+        };
         Buffer { shape: shape, data: data }
     }
 
