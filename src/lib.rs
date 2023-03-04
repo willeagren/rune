@@ -25,7 +25,8 @@
 // Last updated: 2023-03-04
 //
 
-mod buffer;
+use ndarray::ArrayD;
+use ndarray::Array;
 
 use numpy::PyReadonlyArrayDyn;
 use numpy::PyArrayDyn;
@@ -33,7 +34,68 @@ use numpy::IntoPyArray;
 
 use pyo3::prelude::*;
 use pyo3::wrap_pyfunction;
+use pyo3::PyNumberProtocol;
+use pyo3::PyObjectProtocol;
 use pyo3::Python;
+
+#[pyclass]
+#[derive(Default, Clone, Debug)]
+pub struct Buffer {
+    shape: Vec<usize>,
+    data: ArrayD<f32>,
+}
+
+#[pymethods]
+impl Buffer {
+    #[new]
+    fn new(arr: PyReadonlyArrayDyn<f32>) -> Self {
+        let shape = arr.shape().to_vec();
+        let vec = match arr.as_slice() {
+            Ok(raw) => raw.to_vec(),
+            Err(_) => panic!("Could not create immutable view of internal data."),
+        };
+        let data: ArrayD<f32> = Array::from_vec(vec).into_dyn();
+        Buffer { shape: shape, data: data }
+    }
+
+    fn to_numpy<'py>(&self, py: Python<'py>) -> &'py PyArrayDyn<f32> {
+        self.data.clone().into_pyarray(py)
+    }
+}
+
+#[pyproto]
+impl PyNumberProtocol for Buffer {
+    fn __add__(lhs: Buffer, rhs: Buffer) -> PyResult<Buffer> {
+        let shape: Vec<usize> = lhs.shape.clone();
+        let data: ArrayD<f32> = lhs.data + rhs.data;
+        Ok(Buffer { shape: shape, data: data })
+    }
+
+    fn __sub__(lhs: Buffer, rhs: Buffer) -> PyResult<Buffer> {
+        let shape: Vec<usize> = lhs.shape.clone();
+        let data: ArrayD<f32> = lhs.data - rhs.data;
+        Ok(Buffer { shape: shape, data: data })
+    }
+
+    fn __truediv__(lhs: Buffer, rhs: Buffer) -> PyResult<Buffer> {
+        let shape: Vec<usize> = lhs.shape.clone();
+        let data: ArrayD<f32> = lhs.data / rhs.data;
+        Ok(Buffer { shape: shape, data: data })
+    }
+
+    fn __mul__(lhs: Buffer, rhs: Buffer) -> PyResult<Buffer> {
+        let shape: Vec<usize> = lhs.shape.clone();
+        let data: ArrayD<f32> = lhs.data * rhs.data;
+        Ok(Buffer { shape: shape, data: data })
+    }
+}
+
+#[pyproto]
+impl PyObjectProtocol for Buffer {
+    fn __str__(&self) -> PyResult<String> {
+        Ok(format!("{:?}", self.data))
+    }
+}
 
 #[pyfunction]
 pub fn add<'py>(
@@ -57,14 +119,11 @@ pub fn sub<'py>(
     (x - y).into_pyarray(py)
 }
 
-//
-// DEFINE THE ``rune`` python module
-//
 #[pymodule]
 fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_wrapped(wrap_pyfunction!(add))?;
     m.add_wrapped(wrap_pyfunction!(sub))?;
-    m.add_class::<buffer::Buffer>()?;
+    m.add_class::<Buffer>()?;
     Ok(())
 }
 
