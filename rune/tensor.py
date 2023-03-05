@@ -40,7 +40,7 @@ from typing import (
     NoReturn,
 )
 from rune.typing import ArrayD, DataType
-from rune import Buffer 
+from rune import RBuffer 
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class Tensor(object):
                 f'Creating a tensor from a scalar is currently not supported, {data=}'
             )
 
-        self.data = Buffer(data)
+        self.data = RBuffer(data)
         self.shape = data.shape
         self.dtype = data.dtype
         self.grad = None
