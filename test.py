@@ -9,6 +9,7 @@ buf_b = rn.RBuffer(b)
 
 buf_c = buf_a + buf_b
 
+print('==================== TESTING RBuffer ====================')
 print('Rust ndarray RBuffer: ', buf_c)
 
 c = buf_c.detach()
@@ -18,3 +19,8 @@ print(type(c))
 print(c.dtype)
 print(c.shape)
 
+print('==================== TESTING Tensor ====================')
+t_a = rn.Tensor(a)
+t_b = rn.Tensor(b)
+t_c = rn.tadd(t_a, t_b).detach()
+print(t_c)

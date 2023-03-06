@@ -26,7 +26,7 @@ Last updated: 2023-02-28
 """
 
 from .rune import *  # noqa
-from rune.tensor import *
+#from rune.tensor import *
 
 # Create logger and set up configuration
 # Levels in decreasing order of verbosity:

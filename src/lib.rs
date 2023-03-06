@@ -44,7 +44,8 @@ pub fn add<'py>(
     py: Python<'py>, 
     x: PyReadonlyArrayDyn<f32>, 
     y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
+) -> &'py PyArrayDyn<f32>
+{
     let x = &x.as_array();
     let y = &y.as_array();
     (x + y).into_pyarray(py)
@@ -55,17 +56,41 @@ pub fn sub<'py>(
     py: Python<'py>, 
     x: PyReadonlyArrayDyn<f32>, 
     y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
+) -> &'py PyArrayDyn<f32>
+{
     let x = &x.as_array();
     let y = &y.as_array();
     (x - y).into_pyarray(py)
 }
 
+#[pyfunction]
+pub fn mul<'py>(
+    py: Python<'py>,
+    x: PyReadonlyArrayDyn<f32>,
+    y: PyReadonlyArrayDyn<f32>,
+) -> &'py PyArrayDyn<f32>
+{
+    let x = &x.as_array();
+    let y = &y.as_array();
+    (x * y).into_pyarray(py)
+}
+
+#[pyfunction]
+pub fn tadd<'py>(py: Python<'py>, x: tensor::Tensor, y: tensor::Tensor)
+-> tensor::Tensor
+{
+    x.add(y)
+}
+
 #[pymodule]
-fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()>
+{
     m.add_wrapped(wrap_pyfunction!(add))?;
     m.add_wrapped(wrap_pyfunction!(sub))?;
+    m.add_wrapped(wrap_pyfunction!(mul))?;
+    m.add_wrapped(wrap_pyfunction!(tadd))?;
     m.add_class::<rbuffer::RBuffer>()?;
+    m.add_class::<tensor::Tensor>()?;
     Ok(())
 }
 

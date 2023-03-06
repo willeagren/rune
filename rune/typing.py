@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 File created: 2023-02-28
-Last updated: 2023-03-04
+Last updated: 2023-03-06
 """
 
-import numpy
+import numpy as np
 import builtins
 
 from typing import Union
@@ -39,8 +39,8 @@ __all__ = (
     'String',
 )
 
-ArrayD = numpy.ndarray
-DataType = Union[numpy.float32]
+ArrayD = np.ndarray
+DataType = Union[np.float32]
 Boolean = builtins.bool
 Float = builtins.float
 Integer = builtins.int

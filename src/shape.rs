@@ -33,9 +33,9 @@ pub struct Shape
 
 impl Shape
 {
-    pub fn new(dims: &[usize]) -> Self
+    pub fn new(dims: Vec<usize>) -> Self
     {
-        Shape { dims: dims.to_vec() }
+        Shape { dims: dims }
     }
 
     pub fn none() -> Self
@@ -48,7 +48,7 @@ impl Shape
         self.dims.clone()
     }
 
-    fn set_dims(&mut self, dims: &[usize])
+    fn set_dims(&mut self, dims: Vec<usize>)
     {
         self.dims = dims.to_vec();
     }

@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 File created: 2023-02-28
-Last updated: 2023-03-04
+Last updated: 2023-03-06
 """
 
 from __future__ import annotations
@@ -40,7 +40,6 @@ from typing import (
     NoReturn,
 )
 from rune.typing import ArrayD, DataType
-from rune import RBuffer 
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ class Tensor(object):
                 f'Creating a tensor from a scalar is currently not supported, {data=}'
             )
 
-        self.data = RBuffer(data)
+        self.data = data
         self.shape = data.shape
         self.dtype = data.dtype
         self.grad = None

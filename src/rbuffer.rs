@@ -22,7 +22,7 @@
 // SOFTWARE.
 // 
 // File created: 2023-03-05
-// Last updated: 2023-03-05
+// Last updated: 2023-03-06
 //
 
 use ndarray::ArrayD;
@@ -97,7 +97,7 @@ impl PyNumberProtocol for RBuffer {
 #[pyproto]
 impl PyObjectProtocol for RBuffer {
     fn __str__(&self) -> PyResult<String> {
-        Ok(format!("{:?}", self.data))
+        Ok(format!("{:?}", self))
     }
 }
 

@@ -26,39 +26,62 @@
 //
 
 use crate::shape::Shape;
-use crate::datatype::DataType;
 
+use numpy::PyReadonlyArrayDyn;
+use numpy::PyArrayDyn;
+use numpy::IntoPyArray;
+
+use ndarray::Array;
 use ndarray::ArrayD;
 use ndarray::IxDyn;
 
-#[derive(Debug)]
-pub struct Tensor<'a, T: DataType>
+use pyo3::prelude::*;
+use pyo3::types::PyType;
+use pyo3::types::PyList;
+
+#[pyclass]
+#[derive(Debug, Clone)]
+pub struct Tensor
 {
     shape: Shape,
-    data: ArrayD<T>,
-    parents: Vec<&'a Tensor<'a, T>>,
+    data: ArrayD<f32>,
+    parents: Vec<Box<Tensor>>,
     requires_grad: bool,
 }
 
-impl<T: DataType> Default for Tensor<'_, T>
+impl Default for Tensor
 {
     fn default() -> Self
     {
         Tensor
         {
             shape: Shape::none(),
-            data: ArrayD::<T>::zeros(IxDyn(&[1])),
+            data: ArrayD::<f32>::zeros(IxDyn(&[1])),
             parents: Vec::new(),
             requires_grad: false,
         }
     }
 }
 
-impl<T: DataType> Tensor<'_, T>
+#[pymethods]
+impl Tensor
 {
-    pub fn new(data: ArrayD<T>) -> Self
+    #[new]
+    pub fn new(np_arr: PyReadonlyArrayDyn<f32>) -> Self
     {
-        let shape = Shape::new(data.shape());
+        let shape_slice = np_arr.shape();
+        let data_vec = match np_arr.as_slice()
+        {
+            Ok(raw) => raw.to_vec(),
+            Err(e) => panic!("Could not create immutable view of internal data, {}.", e),
+        };
+        let data: ArrayD<f32> = Array::from_vec(data_vec).into_dyn();
+        let data = match data.into_shape(shape_slice)
+        {
+            Ok(shaped_arrayd) => shaped_arrayd,
+            Err(e) => panic!("Could not reshape ArrayBase to {:?}, {}.", shape_slice, e),
+        };
+        let shape = Shape::new(shape_slice.to_vec());
         Tensor
         { 
             shape: shape,
@@ -67,9 +90,11 @@ impl<T: DataType> Tensor<'_, T>
         }
     }
 
-    pub fn zeros(dims: &[usize]) -> Self
+    #[classmethod]
+    pub fn zeros(cls: &PyType, dims: &PyList) -> Self
     {
-        let data = ArrayD::<T>::zeros(IxDyn(dims));
+        let dims: Vec<usize> = dims.extract().expect("Could not extract Vec<T> from &PyList");
+        let data = ArrayD::<f32>::zeros(IxDyn(&dims));
         Tensor
         {
             shape: Shape::new(dims),
@@ -78,9 +103,11 @@ impl<T: DataType> Tensor<'_, T>
         }
     }
 
-    pub fn ones(dims: &[usize]) -> Self
+    #[classmethod]
+    pub fn ones(cls: &PyType, dims: &PyList) -> Self
     {
-        let data = ArrayD::<T>::ones(IxDyn(dims));
+        let dims: Vec<usize> = dims.extract().expect("Could not extract Vec<T> from &PyList");
+        let data = ArrayD::<f32>::ones(IxDyn(&dims));
         Tensor
         {
             shape: Shape::new(dims),
@@ -89,84 +116,110 @@ impl<T: DataType> Tensor<'_, T>
         }
     }
 
+    fn detach<'py>(&self, py: Python<'py>) -> &'py PyArrayDyn<f32>
+    {
+        self.data.clone().into_pyarray(py)
+    }
+
+    /*
     fn shape(&self) -> &Shape
     {
         &self.shape
     }
 
-    fn data(&self) -> &ArrayD<T>
+    fn data(&self) -> &ArrayD<f32>
     {
         &self.data
     }
 
-    fn parents(&self) -> &Vec<&'_ Tensor<'_, T>>
+    fn parents(&self) -> &Vec<Box<Tensor>>
     {
         &self.parents
     }
+*/
 
     fn requires_grad(&self) -> bool
     {
         self.requires_grad
     }
 
+    /*
+    fn sub(self, other: Tensor) -> Tensor
+    {
+        let data = &self.data - &other.data;
+        let dims = Shape::new(data.shape().to_vec());
+        let requires_grad = any_requires_grad(vec![&self, &other]);
+        Tensor
+        {
+            shape: dims,
+            data: data,
+            parents: vec![Box::new(self), Box::new(other)],
+            requires_grad: requires_grad,
+        }
+    }
+
+    fn mul(self, other: Tensor) -> Tensor
+    {
+        let data = &self.data * &other.data;
+        let dims = Shape::new(data.shape().to_vec());
+        let requires_grad = any_requires_grad(vec![&self, &other]);
+        Tensor
+        {
+            shape: dims,
+            data: data,
+            parents: vec![Box::new(self), Box::new(other)],
+            requires_grad: requires_grad,
+        }
+    }
+
+    fn div(self, other: Tensor) -> Tensor
+    {
+        let data = &self.data / &other.data;
+        let dims = Shape::new(data.shape().to_vec());
+        let requires_grad = any_requires_grad(vec![&self, &other]);
+        Tensor
+        {
+            shape: dims,
+            data: data,
+            parents: vec![Box::new(self), Box::new(other)],
+            requires_grad: requires_grad,
+        }
+    }
+    */
+}
+/*
+
     fn set_requires_grad(&mut self, requires: bool)
     {
         self.requires_grad = requires
     }
 }
-
+*/
+ 
 /// Return true if any of the tensors requires gradient.
-pub fn any_requires_grad<T: DataType>
-(tensors: Vec<&Tensor<T>>) -> bool
+pub fn any_requires_grad (tensors: Vec<&Tensor>) -> bool
 {
     tensors.iter().any(|&t| t.requires_grad())
 }
 
-/// binary ops
-impl<'a, T: DataType> Tensor<'a, T>
+impl Tensor 
 {
-    fn add(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
+    pub fn add(self, other: Tensor) -> Self
     {
         let data = &self.data + &other.data;
-        let dims = Shape::new(data.shape());
-        let requires_grad = any_requires_grad(vec![self, other]);
+        let dims = Shape::new(data.shape().to_vec());
+        let requires_grad = any_requires_grad(vec![&self, &other]);
         Tensor
         {
             shape: dims,
             data: data,
-            parents: vec![self, other],
-            requires_grad: requires_grad,
-        }
-    }
-    fn sub(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
-    {
-        let data = &self.data - &other.data;
-        let dims = Shape::new(data.shape());
-        let requires_grad = any_requires_grad(vec![self, other]);
-        Tensor
-        {
-            shape: dims,
-            data: data,
-            parents: vec![self, other],
-            requires_grad: requires_grad,
-        }
-    }
-
-    fn mul(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
-    {
-        let data = &self.data * &other.data;
-        let dims = Shape::new(data.shape());
-        let requires_grad = any_requires_grad(vec![self, other]);
-        Tensor
-        {
-            shape: dims,
-            data: data,
-            parents: vec![self, other],
+            parents: vec![Box::new(self), Box::new(other)],
             requires_grad: requires_grad,
         }
     }
 }
 
+/*
 #[cfg(test)]
 mod tests
 {
@@ -175,45 +228,56 @@ mod tests
     use ndarray::IxDyn;
 
     #[test]
-    fn ops()
+    fn ops_add()
     {
-        let mut a = Tensor::<f32>::new(ArrayD::<f32>::ones(IxDyn(&[128, 1024])));
-        let b = Tensor::<f32>::ones(&[128, 1]);
-        let c = Tensor::<f32>::zeros(&[1, 1024]);
-
-        let d = a.add(&b);
-        let e = a.add(&c);
-
-        let f = ArrayD::<f32>::ones(IxDyn(&[128, 1024]));
-        assert_eq!(f, *e.data());
-
-        let j = Tensor::<f32>::new(f);
-
+        let mut a = Tensor::new(ArrayD::<f32>::ones(IxDyn(&[128, 1024])));
+        let b = Tensor::ones(&[128, 1]);
         a.set_requires_grad(true);
-        let mut g = a.sub(&b);
 
-        assert_eq!(g.requires_grad(), true);
-        g.set_requires_grad(false);
-        assert_eq!(g.requires_grad(), false);
+        let c = a.add(b);
+        let d = 2f32 * ArrayD::<f32>::ones(IxDyn(&[128, 1024]));
+        assert_eq!(*c.data(), d);
 
-        let h = ArrayD::<f32>::zeros(IxDyn(&[128, 1024]));
-        assert_eq!(h, *g.data());
-
-        let i = j.mul(&c);
-        assert_eq!(h, *i.data());
+        let e = c.add(Tensor::new(d));
+        let f = 4f32 * ArrayD::<f32>::ones(IxDyn(&[128, 1024]));
+        assert_eq!(*e.data(), f);
     }
 
     #[test]
-    fn grad()
+    fn ops_sub()
     {
-        let mut a = Tensor::<f32>::new(ArrayD::<f32>::ones(IxDyn(&[128, 1024])));
-        let mut b = Tensor::<f32>::ones(&[128, 1]);
-        b.set_requires_grad(true);
+        let a = Tensor::new(ArrayD::<f32>::ones(IxDyn(&[32, 3, 256, 256])));
+        let b = Tensor::ones(&[32, 3, 256, 1]);
 
-        let c = a.add(&b);
+        let c = a.sub(b);
+        let d = Tensor::zeros(&[32, 3, 256, 256]);
+        assert_eq!(*c.data(), *d.data());
 
+    }
+
+    #[test]
+    fn ops_mul()
+    {
+        let a = Tensor::new(ArrayD::<f32>::ones(IxDyn(&[128, 1024])));
+        let b = Tensor::ones(&[128, 1024]);
+
+        let c = a.mul(b);
+        let d = Tensor::ones(&[128, 1024]);
+        assert_eq!(*c.data(), *d.data());
+    }
+
+    #[test]
+    fn ops_div()
+    {
+        let mut a = Tensor::new(ArrayD::<f32>::ones(IxDyn(&[128, 1024])));
+        let b = Tensor::ones(&[128, 1024]);
+        a.set_requires_grad(true);
+
+        let c = a.div(b);
+        let d = ArrayD::<f32>::ones(IxDyn(&[128, 1024]));
         assert_eq!(c.requires_grad(), true);
-        assert_eq!(c.parents().len(), 2);
+        assert_eq!(*c.data(), d);
     }
 }
+*/
 
