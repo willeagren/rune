@@ -39,8 +39,8 @@ from typing import (
     Sequence,
     NoReturn,
 )
-from rune.typing import ArrayD
-from rune import Buffer 
+from rune.typing import ArrayD, DataType
+from rune import RBuffer 
 
 logger = logging.getLogger(__name__)
 
@@ -53,14 +53,29 @@ class Tensor(object):
     """
 
     def __init__(self, data: Union[ArrayD, List, Sequence], *args: Tuple,
-        requires_grad: Boolean = False, **kwargs: Dict) -> NoReturn:
+        requires_grad: Boolean = False, dtype: DataType = np.float32, **kwargs: Dict) -> NoReturn:
+        
+        if isinstance(data, np.ndarray):
+            data = data.astype(dtype)
+        if isinstance(data, (list, tuple)):
+            data = np.array(data).astype(dtype)
 
-        # TODO convert data to ndarray
-        self.data = Buffer(data)
+        # TODO should we allow scalar values as tensors?
+        if not hasattr(data, '__iter__'):
+            raise NotImplementedError(
+                f'Creating a tensor from a scalar is currently not supported, {data=}'
+            )
+
+        self.data = RBuffer(data)
         self.shape = data.shape
+        self.dtype = data.dtype
         self.grad = None
         self._ctx = None
         self.requires_grad = requires_grad
+
+    @property
+    def dtype(self) -> DataType:
+        return self.dtype
 
     @property
     def shape(self) -> Tuple:

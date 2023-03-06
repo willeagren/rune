@@ -21,51 +21,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-02-16
+// File created: 2023-03-06
 // Last updated: 2023-03-06
 //
 
-mod datatype;
-mod rbuffer;
-mod utils;
-mod shape;
-mod tensor;
+use std::fmt::Debug;
 
-use numpy::PyReadonlyArrayDyn;
-use numpy::PyArrayDyn;
-use numpy::IntoPyArray;
+use num_traits::Float;
+use num_traits::ToPrimitive;
 
-use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
-use pyo3::Python;
+pub trait DataType: Default + Copy + Debug + Float + ToPrimitive {}
 
-#[pyfunction]
-pub fn add<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x + y).into_pyarray(py)
-}
-
-#[pyfunction]
-pub fn sub<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x - y).into_pyarray(py)
-}
-
-#[pymodule]
-fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(add))?;
-    m.add_wrapped(wrap_pyfunction!(sub))?;
-    m.add_class::<rbuffer::RBuffer>()?;
-    Ok(())
-}
+impl DataType for f32 {}
+impl DataType for f64 {}
 

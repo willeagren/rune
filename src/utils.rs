@@ -21,51 +21,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-02-16
-// Last updated: 2023-03-06
+// File created: 2023-03-05
+// Last updated: 2023-03-05
 //
 
-mod datatype;
-mod rbuffer;
-mod utils;
-mod shape;
-mod tensor;
-
-use numpy::PyReadonlyArrayDyn;
-use numpy::PyArrayDyn;
-use numpy::IntoPyArray;
-
-use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
-use pyo3::Python;
-
-#[pyfunction]
-pub fn add<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x + y).into_pyarray(py)
-}
-
-#[pyfunction]
-pub fn sub<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x - y).into_pyarray(py)
-}
-
-#[pymodule]
-fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(add))?;
-    m.add_wrapped(wrap_pyfunction!(sub))?;
-    m.add_class::<rbuffer::RBuffer>()?;
-    Ok(())
+#[allow(dead_code)]
+fn vec_to_array<T, const N: usize>(v: Vec<T>) -> [T; N] {
+    v.try_into()
+        .unwrap_or_else(
+            |v: Vec<T>| panic!("Expected Vec of length {} but got {}", N, v.len())
+        )
 }
 
