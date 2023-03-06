@@ -21,51 +21,75 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-02-16
+// File created: 2023-03-06
 // Last updated: 2023-03-06
 //
 
-mod datatype;
-mod rbuffer;
-mod utils;
-mod shape;
-mod tensor;
-
-use numpy::PyReadonlyArrayDyn;
-use numpy::PyArrayDyn;
-use numpy::IntoPyArray;
-
-use pyo3::prelude::*;
-use pyo3::wrap_pyfunction;
-use pyo3::Python;
-
-#[pyfunction]
-pub fn add<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x + y).into_pyarray(py)
+#[derive(Clone, Debug, Default)]
+pub struct Shape
+{
+    dims: Vec<usize>,
 }
 
-#[pyfunction]
-pub fn sub<'py>(
-    py: Python<'py>, 
-    x: PyReadonlyArrayDyn<f32>, 
-    y: PyReadonlyArrayDyn<f32>,
-) -> &'py PyArrayDyn<f32> {
-    let x = &x.as_array();
-    let y = &y.as_array();
-    (x - y).into_pyarray(py)
+impl Shape
+{
+    pub fn new(dims: &[usize]) -> Self
+    {
+        Shape { dims: dims.to_vec() }
+    }
+
+    pub fn none() -> Self
+    {
+        Shape { ..Default::default() }
+    }
+
+    fn dims(&self) -> Vec<usize>
+    {
+        self.dims.clone()
+    }
+
+    fn set_dims(&mut self, dims: &[usize])
+    {
+        self.dims = dims.to_vec();
+    }
 }
 
-#[pymodule]
-fn rune(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
-    m.add_wrapped(wrap_pyfunction!(add))?;
-    m.add_wrapped(wrap_pyfunction!(sub))?;
-    m.add_class::<rbuffer::RBuffer>()?;
-    Ok(())
+impl PartialEq for Shape
+{
+    fn eq(&self, other: &Self) -> bool
+    {
+        self.dims == other.dims
+    }
+}
+
+impl Eq for Shape {}
+
+#[cfg(test)]
+mod tests
+{
+    use super::*;
+
+    #[test]
+    fn constructors()
+    {
+        let a = Shape::new(&[1024, 3, 256, 256]);
+        let b = Shape::new(&[2048, 64, 32, 32]);
+        let c = Shape::none();
+        let d = Shape::new(&[1024, 3, 256, 256]);
+
+        assert_eq!(a, d);
+        assert_eq!(b.dims().len(), 4);
+        assert_eq!(*c.dims(), Vec::new());
+    }
+
+    #[test]
+    fn setter()
+    {
+        let mut a = Shape::none();
+        a.set_dims(&[10, 40, 29]);
+
+        assert_eq!(*a.dims(), vec![10, 40, 29]);
+        assert_ne!(*a.dims(), Vec::new());
+    }
 }
 
