@@ -24,3 +24,4 @@ t_a = rn.Tensor(a)
 t_b = rn.Tensor(b)
 t_c = rn.tadd(t_a, t_b).detach()
 print(t_c)
+
