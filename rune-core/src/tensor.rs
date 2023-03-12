@@ -30,9 +30,12 @@ use crate::shape::Shape;
 use crate::utils::*;
 
 use ndarray::Array0;
+use ndarray::Array2;
 use ndarray::ArrayD;
 use ndarray::Ix0;
+use ndarray::Ix2;
 use ndarray::IxDyn;
+use ndarray::prelude::s;
 
 use ndarray_rand::RandomExt;
 use ndarray_rand::rand_distr::Distribution;
@@ -46,6 +49,7 @@ pub struct Tensor<'a, T: DataType>
     parents: Vec<&'a Tensor<'a, T>>,
     requires_grad: bool,
     dtype: T,
+    grad: ArrayD<T>,
 }
 
 ///
@@ -72,6 +76,7 @@ impl<T: DataType> Default for Tensor<'_, T>
             parents: Vec::new(),
             requires_grad: false,
             dtype: T::default(),
+            grad: Array0::<T>::zeros(Ix0()).into_dyn(),
         }
     }
 }
@@ -156,9 +161,14 @@ impl<T: DataType> Tensor<'_, T>
         self.requires_grad
     }
 
-    fn set_requires_grad(&mut self, requires_grad: bool)
+    pub fn set_requires_grad(&mut self, requires_grad: bool)
     {
         self.requires_grad = requires_grad;
+        if requires_grad
+        {
+            let dims = self.shape.dims().as_slice();
+            self.grad = ArrayD::<T>::zeros(IxDyn(dims));
+        }
     }
 
     pub fn dtype(&self) -> T
@@ -181,14 +191,15 @@ impl<'a, T: DataType> Tensor<'a, T>
 ///
 /// Binary ops
 ///
-impl<'a, T: DataType> Tensor<'a, T>
+impl<'a, T: DataType + 'static> Tensor<'a, T>
 {
-    fn add(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
+    pub fn add(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
     {
         let data = &self.data + &other.data;
         let dims = Shape::new(data.shape());
         let requires_grad = any_requires_grad(vec![self, other]);
         let parents = vec![self, other];
+        let grad = ArrayD::<T>::zeros(data.shape());
         Tensor
         {
             shape: dims,
@@ -196,15 +207,17 @@ impl<'a, T: DataType> Tensor<'a, T>
             parents: parents,
             requires_grad: requires_grad,
             dtype: T::default(),
+            grad: grad,
         }
     }
 
-    fn sub(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
+    pub fn sub(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
     {
         let data = &self.data - &other.data;
         let dims = Shape::new(data.shape());
         let requires_grad = any_requires_grad(vec![self, other]);
         let parents = vec![self, other];
+        let grad = ArrayD::<T>::zeros(data.shape());
         Tensor
         {
             shape: dims,
@@ -212,15 +225,17 @@ impl<'a, T: DataType> Tensor<'a, T>
             parents: parents,
             requires_grad: requires_grad,
             dtype: T::default(),
+            grad: grad,
         }
     }
 
-    fn mul(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
+    pub fn mul(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
     {
         let data = &self.data * &other.data;
         let dims = Shape::new(data.shape());
         let requires_grad = any_requires_grad(vec![self, other]);
         let parents = vec![self, other];
+        let grad = ArrayD::<T>::zeros(data.shape());
         Tensor
         {
             shape: dims,
@@ -228,15 +243,17 @@ impl<'a, T: DataType> Tensor<'a, T>
             parents: parents,
             requires_grad: requires_grad,
             dtype: T::default(),
+            grad: grad,
         }
     }
 
-    fn div(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
+    pub fn div(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
     {
         let data = &self.data / &other.data;
         let dims = Shape::new(data.shape());
         let requires_grad = any_requires_grad(vec![self, other]);
         let parents = vec![self, other];
+        let grad = ArrayD::<T>::zeros(data.shape());
         Tensor
         {
             shape: dims,
@@ -244,6 +261,53 @@ impl<'a, T: DataType> Tensor<'a, T>
             parents: parents,
             requires_grad: requires_grad,
             dtype: T::default(),
+            grad: grad,
+        }
+    }
+
+    ///
+    /// output (i, k) = (i, j) @ (j, k)
+    ///
+    /// a = (i, j)
+    /// b = (j, k)
+    /// t = zeros(i, k)
+    ///
+    /// for i in range 0..i
+    ///     for j in range 0..k
+    ///         for k in range 0..j
+    ///             t[i, j] += a[i, k] * b[k, j]
+    /// return t
+    ///
+    pub fn matmul(&'a self, other: &'a Tensor<T>) -> Tensor<'a, T>
+    {
+        let lhs_dims = self.shape.dims();
+        let rhs_dims = other.shape.dims();
+        let dims = &[lhs_dims[0], rhs_dims[1]];
+        let mut data = ArrayD::<T>::zeros(IxDyn(dims));
+
+        for i in 0..lhs_dims[0]
+        {
+            for j in 0..rhs_dims[1] 
+            {
+                for k in 0..lhs_dims[1]
+                {
+                    data[[i, j]] += self.data()[[i, k]] + other.data()[[k, j]];
+                }
+            }
+        }
+
+        let dims = Shape::new(dims);
+        let requires_grad = any_requires_grad(vec![self, other]);
+        let parents = vec![self, other];
+        let grad = ArrayD::<T>::zeros(data.shape());
+        Tensor
+        {
+            shape: dims,
+            data: data,
+            parents: parents,
+            requires_grad: requires_grad,
+            dtype: T::default(),
+            grad: grad,
         }
     }
 }

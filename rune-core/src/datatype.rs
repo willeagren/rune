@@ -26,11 +26,12 @@
 //
 
 use std::fmt::Debug;
+use std::ops::AddAssign;
 
 use num_traits::Float;
 use num_traits::ToPrimitive;
 
-pub trait DataType: Default + Copy + Debug + Float + ToPrimitive {}
+pub trait DataType: Default + Copy + Debug + Float + ToPrimitive + AddAssign {}
 
 impl DataType for f32 {}
 impl DataType for f64 {}

@@ -28,24 +28,39 @@
 use crate::datatype::DataType;
 use crate::tensor::Tensor;
 
-use std::any::type_name;
 
-pub fn any_requires_grad<T>(tensors: Vec<&Tensor<T>>) -> bool
-where T: DataType
-{
-    tensors.iter().any(|&t| t.requires_grad())
-}
+use ndarray::ArrayD;
 
-pub fn type_of<T>(_: T) -> &'static str
-where T: DataType
-{
-    type_name::<T>()
-}
+use ndarray_rand::rand_distr::Distribution;
+use ndarray_rand::rand_distr::Normal;
+use ndarray_rand::rand_distr::Uniform;
 
-pub fn vec_to_array<T, const N: usize>(v: Vec<T>) -> [T; N]
+pub struct Parameter {}
+
+impl Parameter
 {
-    v.try_into().unwrap_or_else(
-        |v: Vec<T>| panic!("Expected Vec<T> of length {} but got {}", N, v.len())
-    )
+    pub fn new<'a, T>(data: ArrayD<T>) -> Tensor<'a, T>
+    where T: DataType
+    {
+        let mut parameter = Tensor::new(data);
+        parameter.set_requires_grad(true);
+        parameter
+    }
+
+    pub fn uniform<'a, T>(dims: &[usize], low: f32, high: f32) -> Tensor<'a, T>
+    where T: DataType, Uniform<f32>: Distribution<T>
+    {
+        let mut parameter = Tensor::<T>::uniform(dims, low, high);
+        parameter.set_requires_grad(true);
+        parameter
+    }
+
+    pub fn normal<'a, T>(dims: &[usize], mu: f32, sigma: f32) -> Tensor<'a, T>
+    where T: DataType, Normal<f32>: Distribution<T>
+    {
+        let mut parameter = Tensor::<T>::normal(dims, mu, sigma);
+        parameter.set_requires_grad(true);
+        parameter
+    }
 }
 

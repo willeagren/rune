@@ -25,27 +25,7 @@
 // Last updated: 2023-03-12
 //
 
-use crate::datatype::DataType;
-use crate::tensor::Tensor;
-
-use std::any::type_name;
-
-pub fn any_requires_grad<T>(tensors: Vec<&Tensor<T>>) -> bool
-where T: DataType
-{
-    tensors.iter().any(|&t| t.requires_grad())
-}
-
-pub fn type_of<T>(_: T) -> &'static str
-where T: DataType
-{
-    type_name::<T>()
-}
-
-pub fn vec_to_array<T, const N: usize>(v: Vec<T>) -> [T; N]
-{
-    v.try_into().unwrap_or_else(
-        |v: Vec<T>| panic!("Expected Vec<T> of length {} but got {}", N, v.len())
-    )
-}
+pub mod module;
+pub mod parameter;
+pub mod sequential;
 
