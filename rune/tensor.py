@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 File created: 2023-02-28
-Last updated: 2023-03-06
+Last updated: 2023-03-12
 """
 
 from __future__ import annotations
@@ -51,36 +51,45 @@ class Tensor(object):
     """
     """
 
-    def __init__(self, data: Union[ArrayD, List, Sequence], *args: Tuple,
-        requires_grad: Boolean = False, dtype: DataType = np.float32, **kwargs: Dict) -> NoReturn:
+    def __init__(self,
+        data: Union[np.ndarray, List, Sequence],
+        *args: Tuple,
+        requires_grad: Boolean = False,
+        dtype: DataType = np.float32,
+        **kwargs: Dict,
+        ) -> NoReturn:
         
         if isinstance(data, np.ndarray):
             data = data.astype(dtype)
+
         if isinstance(data, (list, tuple)):
             data = np.array(data).astype(dtype)
 
-        # TODO should we allow scalar values as tensors?
         if not hasattr(data, '__iter__'):
-            raise NotImplementedError(
-                f'Creating a tensor from a scalar is currently not supported, {data=}'
-            )
+            data = np.array([data]).astype(dtype)
 
         self.data = data
-        self.shape = data.shape
-        self.dtype = data.dtype
         self.grad = None
         self._ctx = None
         self.requires_grad = requires_grad
 
     @property
     def dtype(self) -> DataType:
-        return self.dtype
+        return self.data.dtype
 
     @property
     def shape(self) -> Tuple:
-        return self.shape
+        return self.data.shape
 
     @property
     def requires_grad(self) -> Boolean:
         return self.requires_grad
-    
+
+    @classmethod
+    def zeros(cls, *shape: Tuple, **kwargs) -> Tensor:
+        return cls(np.zeros(shape), **kwargs)
+
+    @classmethod
+    def ones(cls, *shape: Tuple, **kwargs) -> Tensor:
+        return cls(np.ones(shape), **kwargs)
+

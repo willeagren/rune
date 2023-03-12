@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 File created: 2023-02-28
-Last updated: 2023-03-06
+Last updated: 2023-03-12
 """
 
 import numpy as np
@@ -31,7 +31,6 @@ import builtins
 from typing import Union
 
 __all__ = (
-    'ArrayD',
     'Boolean',
     'DataType',
     'Float',
@@ -39,7 +38,6 @@ __all__ = (
     'String',
 )
 
-ArrayD = np.ndarray
 DataType = Union[np.float32]
 Boolean = builtins.bool
 Float = builtins.float
