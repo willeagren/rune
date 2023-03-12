@@ -21,12 +21,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 // 
-// File created: 2023-03-09
-// Last updated: 2023-03-09
+// File created: 2023-03-12
+// Last updated: 2023-03-12
 //
 
-pub mod datatype;
-pub mod shape;
-pub mod tensor;
-pub mod utils;
+use crate::datatype::DataType;
+use crate::tensor::Tensor;
+
+use std::any::type_name;
+
+pub fn any_requires_grad<T>(tensors: Vec<&Tensor<T>>) -> bool
+where T: DataType
+{
+    tensors.iter().any(|&t| t.requires_grad())
+}
+
+pub fn type_of<T>(_: T) -> &'static str
+where T: DataType
+{
+    type_name::<T>()
+}
 

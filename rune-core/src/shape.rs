@@ -43,7 +43,7 @@ impl Shape
         Shape { ..Default::default() }
     }
 
-    fn dims(&self) -> &Vec<usize>
+    pub fn dims(&self) -> &Vec<usize>
     {
         &self.dims
     }
