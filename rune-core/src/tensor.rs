@@ -34,6 +34,11 @@ use ndarray::ArrayD;
 use ndarray::Ix0;
 use ndarray::IxDyn;
 
+use ndarray_rand::RandomExt;
+use ndarray_rand::rand_distr::Distribution;
+use ndarray_rand::rand_distr::Normal;
+use ndarray_rand::rand_distr::Uniform;
+
 pub struct Tensor<'a, T: DataType>
 {
     shape: Shape,
@@ -48,6 +53,8 @@ pub struct Tensor<'a, T: DataType>
 /// be the deault value of the specified type T. We can not create an empty
 /// ArrayD using the ndarray crate. The smallest tensor we can have is thus
 /// the scalar values. 
+///
+/// # Example
 ///
 /// let t = Tensor::<f32>::default();
 /// println!("[{:?}]", *t.data());
@@ -104,6 +111,36 @@ impl<T: DataType> Tensor<'_, T>
         }
     }
 
+    pub fn uniform(dims: &[usize], low: f32, high: f32) -> Self
+    where Uniform<f32>: Distribution<T>
+    {
+        let dist = Uniform::new(low, high);
+        let data = ArrayD::<T>::random(dims, dist);
+        Tensor
+        {
+            shape: Shape::new(dims),
+            data: data,
+            ..Default::default()
+        }
+    }
+
+    pub fn normal(dims: &[usize], mu: f32, sigma: f32) -> Self
+    where Normal<f32>: Distribution<T>
+    {
+        let dist = match Normal::new(mu, sigma)
+        {
+            Ok(dist) => dist,
+            Err(e) => panic!("Provided variance is not finite, {:?}", e),
+        };
+        let data = ArrayD::<T>::random(dims, dist);
+        Tensor
+        {
+            shape: Shape::new(dims),
+            data: data,
+            ..Default::default()
+        }
+    }
+
     pub fn shape(&self) -> &Shape
     {
         &self.shape
@@ -130,6 +167,9 @@ impl<T: DataType> Tensor<'_, T>
     }
 }
 
+///
+/// Lifetime dependent struct functions.
+///
 impl<'a, T: DataType> Tensor<'a, T>
 {
     fn parents(&self) -> &Vec<&'a Tensor<'a, T>>
@@ -222,6 +262,9 @@ mod tests
         let _b = Tensor::<f32>::default();
         let _c = Tensor::<f32>::ones(&[128, 3, 256, 256]);
         let _d = Tensor::<f64>::zeros(&[128, 784]);
+
+        let _e = Tensor::uniform(&[128, 3, 256, 256], -1.0, 1.0);
+        let _f = Tensor::normal(&[128, 3, 256, 256], 0.0, 3.1415);
     }
 
     #[test]
